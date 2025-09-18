@@ -1,47 +1,52 @@
 from cart import Cart
 from product import Product
-
-##creating fuction which add products to cart
-def buy_products(cart, products):
-    while True:
-        product_name = input("What product do you need (type 'done' to finish shopping): ").lower()
-        if product_name == "done":
-            break
-
-        if product_name in products:
-            product = products[product_name]
-            quantity = int(input(f"How many {product_name}s do you want? "))
-            cart.products.extend([product] * quantity)
-            print(f"Added {quantity} {product_name}(s) to your cart.")
-        else:
-            print(f"Sorry, we don't have {product_name} in stock.")
-
-    return cart
+from shopping import Shopping
+from products import Products
 
 if __name__ == "__main__":
-    cart = Cart()
-    apple = Product("apple", 0.5)
-    bread = Product("bread", 6)
-    water = Product("water", 2)
-    orange = Product("orange", 1)
+    cart: Cart = Cart()
 
-    print(input("Say hello: "))
-    print("Good morning, we have apples, water, bread, and oranges. What do you need?")
+    print("NPC: Good morning! Welcome to our store. What can I assist you with today?")
 
-    products = {"apple": apple, "bread": bread, "water": water, "orange": orange}
-    cart = buy_products(cart, products)
+    products: dict = {}
+    for category_name in dir(Products):
+        category = getattr(Products, category_name)
+        if isinstance(category, type):
+            for product_name, product_instance in category.__dict__.items():
+                if isinstance(product_instance, Product):
+                    products[product_name.lower()] = product_instance
+
+    while True:
+        action: str = input("What would you like to do? (shop/list/done): ").lower()
+
+        if action == "done":
+            break
+        elif action == "list":
+            print("Here is the list of available items:")
+            for product_name in products:
+                print(product_name)
+        elif action == "shop":
+            product_name: str = input("What product do you need (type 'done' to finish shopping): ").lower()
+            if product_name == "done":
+                break
+
+            if product_name in products:
+                product = products[product_name]
+                quantity: int = int(input(f"How many {product_name}s do you want? "))
+                cart.add_product(product, quantity)
+                print(f"Added {quantity} {product_name}(s) to your cart.")
+            else:
+                print(f"NPC: I'm sorry, but we don't have {product_name} in stock.")
+        else:
+            print("NPC: I'm sorry, I didn't understand that.")
 
     print("Here is your cart:")
-    for product in cart.products:
-        print(product.name)
-##showing bill
-    print("Here is your bill:")
-    def generate_bill(cart):
-        total_cost = 0
-        print("Product Name\tPrice")
-        for product in cart.products:
-            print(f"{product.name}\t\t${product.price}")
-            total_cost += product.price
-        print(f"\nTotal cost: ${total_cost}")
+    for product, quantity in cart.products.items():
+        if quantity > 1:
+            print(f"{quantity} {product.name}s")
+        else:
+            print(product.name)
 
-    generate_bill(cart)
+    print("Here is your bill:")
+
+    Shopping.generate_bill(cart)
